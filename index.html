@@ -1210,7 +1210,7 @@ function parseRawInput() {
             element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
             element.setAttribute('download', filename);
             element.style.display = 'none';
-            document.body.appendChild(element);
+            document..appendChild(element);
             element.click();
             document.body.removeChild(element);
         }
@@ -1250,5 +1250,17 @@ function parseRawInput() {
 
         window.addEventListener('DOMContentLoaded', init);
     </script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(registration => {
+          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        }, err => {
+          console.log('ServiceWorker registration failed: ', err);
+        });
+    });
+  }
+</script>
 </body>
 </html>
