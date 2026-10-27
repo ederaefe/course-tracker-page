@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Course & Curriculum Tracker</title>
+    <!-- Embedded Minimalist Dark SVG Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23121212'/><path d='M16 7L6 12l10 5 10-5-10-5zm-7 8.3v5.4c0 2.8 3.1 5.3 7 5.3s7-2.5 7-5.3v-5.4l-7 3.5-7-3.5z' fill='%238ab4f8'/></svg>" type="image/svg+xml">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        googleDark: '#000000',
+                        googleSurface: '#121212',
+                        googleSurfaceHover: '#1e1e1e',
+                        googleBorder: '#2e2e2e',
+                        googleAccent: '#8ab4f8',
+                        googleSuccess: '#81c995',
+                        googleDanger: '#f28b82',
+                        googleWarning: '#fdd663',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Fira Code', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            background-color: #000000;
+            color: #e8eaed;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        /* Subtle Aurora Glow */
+        .aurora-mesh {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 12% 18%, rgba(138, 180, 248, 0.05) 0%, transparent 32%),
+                radial-gradient(circle at 88% 82%, rgba(129, 201, 149, 0.045) 0%, transparent 30%),
+                radial-gradient(circle at 50% 50%, rgba(197, 138, 249, 0.035) 0%, transparent 40%);
+            filter: blur(48px);
+            pointer-events: none;
+        }
+
+        /* Custom Checkbox */
+        .custom-checkbox {
+            appearance: none;
+            width: 19px;
+            height: 19px;
+            border: 2px solid #55585d;
+            border-radius: 5px;
+            background-color: transparent;
+            display: inline-block;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.1s ease;
+            flex-shrink: 0;
+        }
+
+        .custom-checkbox:hover {
+            border-color: #8ab4f8;
+        }
+
+        .custom-checkbox:checked {
+            background-color: #81c995;
+            border-color: #81c995;
+        }
+
+        .custom-checkbox:checked::after {
+            content: '';
+            position: absolute;
+            left: 5px;
+            top: 2px;
+            width: 5px;
+            height: 10px;
+            border: solid #000;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        /* Clean Scrollbars */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #272727;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #444444;
+        }
+
+        /* Smooth course transition without jarring page blinks */
+        .course-fade {
+            animation: softSwitch 0.16s cubic-bezier(0, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes softSwitch {
+            from { opacity: 0.85; transform: translateY(3px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Checkpoint row gentle transition */
+        .topic-row {
+            transition: opacity 0.2s ease, background-color 0.15s ease, border-color 0.15s ease;
+        }
+
+        [contenteditable]:focus {
+            outline: none;
+            box-shadow: 0 0 0 1px #8ab4f8;
+            border-radius: 4px;
+            background-color: rgba(138, 180, 248, 0.06);
+        }
+    </style>
+</head>
+<body class="flex h-screen w-screen overflow-hidden text-gray-200 select-none">
+
+    <div class="aurora-mesh"></div>
+
+    <!-- Mobile Header -->
+    <header class="md:hidden fixed top-0 left-0 w-full h-14 bg-googleSurface border-b border-googleBorder flex items-center justify-between px-4 z-40">
+        <div class="flex items-center gap-2">
+            <button id="mobileMenuBtn" class="text-gray-400 hover:text-white p-1.5 rounded-lg focus:outline-none">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+            <span class="font-medium text-xs tracking-wide uppercase text-white">Course Tracker</span>
+        </div>
+        
+        <!-- Action Menu Trigger (Mobile) -->
+        <button onclick="toggleActionMenu(event)" class="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-googleSurfaceHover transition-colors" title="Options">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="5" r="2"/>
+                <circle cx="12" cy="12" r="2"/>
+                <circle cx="12" cy="19" r="2"/>
+            </svg>
+        </button>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <nav id="sidebar" class="fixed md:static top-14 left-0 w-full md:w-80 h-[calc(100vh-3.5rem)] md:h-screen bg-googleSurface md:bg-[#090909] border-r border-googleBorder transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-30 flex flex-col">
+        <!-- Sidebar Header with Overall Progress -->
+        <div class="p-4 border-b border-googleBorder">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-googleAccent animate-pulse"></span>
+                    <h1 class="text-xs font-semibold tracking-wider text-white uppercase">Curriculum Tracker</h1>
+                </div>
+                <!-- Action Menu Trigger (Desktop) -->
+                <button onclick="toggleActionMenu(event)" class="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-googleSurfaceHover transition-colors" title="Curriculum & Storage Controls">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="5" r="2"/>
+                        <circle cx="12" cy="12" r="2"/>
+                        <circle cx="12" cy="19" r="2"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Degree Completion Card -->
+            <div class="bg-[#141414] border border-googleBorder rounded-xl p-3">
+                <div class="flex items-center justify-between text-[11px] font-mono mb-1.5">
+                    <span class="text-gray-400">Total Progress</span>
+                    <span id="degreeProgressPercent" class="text-googleSuccess font-bold">0%</span>
+                </div>
+                <div class="w-full h-1.5 bg-[#222222] rounded-full overflow-hidden">
+                    <div id="degreeProgressBar" class="h-full bg-googleSuccess transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <div class="flex items-center justify-between text-[10px] text-gray-500 font-mono mt-1.5">
+                    <span id="degreeCheckpointsSummary">0/0 Checkpoints</span>
+                    <span id="coursesCountSummary">0 Courses</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Course Nav List -->
+        <div class="p-2 flex-1 overflow-y-auto space-y-1" id="courseList">
+            <!-- Dynamic course items -->
+        </div>
+
+        <!-- Sidebar Footer Action (Add Course) -->
+        <div class="p-3 border-t border-googleBorder">
+            <button onclick="openCreateCourseModal()" class="w-full py-2 px-3 border border-dashed border-[#333] hover:border-googleAccent text-gray-400 hover:text-googleAccent text-xs font-mono rounded-xl transition-all flex items-center justify-center gap-2">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                <span>Add New Course</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Global Floating Action Menu Dropdown -->
+    <div id="actionMenu" class="hidden fixed z-50 w-56 bg-[#161616] border border-googleBorder rounded-xl shadow-2xl py-1.5 text-xs backdrop-blur-md">
+        <button onclick="openSmartImportModal(); hideActionMenu();" class="w-full text-left px-4 py-2 text-gray-200 hover:bg-googleSurfaceHover flex items-center gap-2.5">
+            <svg class="w-4 h-4 text-googleAccent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+            <span>Import Syllabus Text</span>
+        </button>
+        <button onclick="openCreateCourseModal(); hideActionMenu();" class="w-full text-left px-4 py-2 text-gray-200 hover:bg-googleSurfaceHover flex items-center gap-2.5">
+            <svg class="w-4 h-4 text-googleSuccess" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            <span>Create Course Manually</span>
+        </button>
+        <div class="h-px bg-googleBorder my-1"></div>
+        <button onclick="exportCurrentCourseText(); hideActionMenu();" class="w-full text-left px-4 py-2 text-gray-200 hover:bg-googleSurfaceHover flex items-center gap-2.5">
+            <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <span>Export Active Course (TXT)</span>
+        </button>
+        <button onclick="exportAllText(); hideActionMenu();" class="w-full text-left px-4 py-2 text-gray-200 hover:bg-googleSurfaceHover flex items-center gap-2.5">
+            <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <span>Export All Courses (TXT)</span>
+        </button>
+        <button onclick="exportJSONBackup(); hideActionMenu();" class="w-full text-left px-4 py-2 text-gray-300 hover:bg-googleSurfaceHover flex items-center gap-2.5">
+            <svg class="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            <span>Export Backup (JSON)</span>
+        </button>
+        <label class="w-full text-left px-4 py-2 text-gray-300 hover:bg-googleSurfaceHover flex items-center gap-2.5 cursor-pointer">
+            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+            <span>Restore Backup (JSON)</span>
+            <input type="file" accept=".json" onchange="importJSONBackup(event); hideActionMenu();" class="hidden">
+        </label>
+        <div class="h-px bg-googleBorder my-1"></div>
+        <button onclick="confirmClearAll(); hideActionMenu();" class="w-full text-left px-4 py-2 text-googleDanger hover:bg-googleSurfaceHover flex items-center gap-2.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            <span>Clear Tracker (Clean Slate)</span>
+        </button>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 h-screen overflow-y-auto pt-14 md:pt-0 pb-16 bg-transparent relative w-full">
+        <div class="max-w-4xl mx-auto px-5 py-6 md:py-10" id="mainContent">
+            <!-- Dynamic Active Course Content -->
+        </div>
+    </main>
+
+    <!-- Create Course Modal -->
+    <div id="createCourseModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-[#111111] border border-googleBorder w-full max-w-lg rounded-2xl shadow-2xl p-6">
+            <div class="flex items-center justify-between pb-3 border-b border-googleBorder">
+                <h3 class="text-sm font-semibold text-white">Create New Course</h3>
+                <button onclick="closeCreateCourseModal()" class="text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="space-y-4 py-4 text-xs">
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="col-span-1">
+                        <label class="block text-gray-400 font-mono mb-1">Code</label>
+                        <input id="newCourseCode" type="text" placeholder="CSC 201" class="w-full bg-[#181818] border border-googleBorder rounded-lg px-3 py-2 text-white focus:outline-none focus:border-googleAccent">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-gray-400 font-mono mb-1">Units</label>
+                        <input id="newCourseUnits" type="text" placeholder="3 Units" value="3 Units" class="w-full bg-[#181818] border border-googleBorder rounded-lg px-3 py-2 text-white focus:outline-none focus:border-googleAccent">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-gray-400 font-mono mb-1">Course Title</label>
+                    <input id="newCourseTitle" type="text" placeholder="Data Structures and Algorithms" class="w-full bg-[#181818] border border-googleBorder rounded-lg px-3 py-2 text-white focus:outline-none focus:border-googleAccent">
+                </div>
+                <div>
+                    <label class="block text-gray-400 font-mono mb-1">Initial Topics (1 per line)</label>
+                    <textarea id="newCourseTopics" rows="4" placeholder="Asymptotic Notations & Complexity
+Arrays, Linked Lists, Stacks & Queues
+Tree Traversals and Binary Search Trees
+Sorting & Graph Algorithms" class="w-full bg-[#181818] border border-googleBorder rounded-lg p-3 text-white focus:outline-none focus:border-googleAccent"></textarea>
+                </div>
+            </div>
+            <div class="flex items-center justify-end gap-2 pt-3 border-t border-googleBorder">
+                <button onclick="closeCreateCourseModal()" class="px-4 py-2 text-xs text-gray-400 hover:text-white transition-colors">Cancel</button>
+                <button onclick="submitCreateCourse()" class="px-4 py-2 text-xs font-semibold bg-googleAccent hover:bg-[#a6c8ff] text-black rounded-lg transition-colors">Add Course</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Smart Syllabus Import / Parser Modal -->
+    <div id="importModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-[#111111] border border-googleBorder w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+            <div class="px-6 py-4 border-b border-googleBorder flex items-center justify-between">
+                <div>
+                    <h3 class="text-sm font-semibold text-white">Smart Syllabus Parser</h3>
+                    <p class="text-xs text-gray-400 mt-0.5">Paste any level outline (100L, 200L, 300L, 400L) to extract checkpoints</p>
+                </div>
+                <button onclick="closeSmartImportModal()" class="text-gray-400 hover:text-white p-1 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto space-y-4 flex-1">
+                <div>
+                    <label class="block text-xs font-mono text-gray-400 mb-2 uppercase tracking-wider">Paste Raw Text</label>
+                    <textarea id="rawTextInput" rows="6" placeholder="Example:
+CSC 201: Computer Programming I (3 Units)
+Introduction to algorithms and flowcharts. Variables, data types, and expressions. Control structures and looping. Modular programming with functions and parameter passing. Structured arrays." class="w-full bg-[#181818] border border-googleBorder rounded-xl p-3 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-googleAccent resize-y"></textarea>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <button type="button" onclick="parseRawInput()" class="px-4 py-2 bg-[#1f1f1f] hover:bg-[#282828] text-googleAccent border border-googleBorder rounded-lg text-xs font-medium transition-all flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        <span>Parse & Preview Checkpoints</span>
+                    </button>
+                    <span id="detectedCount" class="text-xs font-mono text-gray-400"></span>
+                </div>
+
+                <!-- Parsed Preview -->
+                <div id="parsePreviewArea" class="hidden space-y-3 pt-3 border-t border-googleBorder">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="text-[11px] font-mono text-gray-400 block mb-1">Detected Code</label>
+                            <input id="previewCode" type="text" class="w-full bg-[#181818] border border-googleBorder rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-googleAccent">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-mono text-gray-400 block mb-1">Units</label>
+                            <input id="previewUnits" type="text" class="w-full bg-[#181818] border border-googleBorder rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-googleAccent" value="2 Units">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-mono text-gray-400 block mb-1">Course Title</label>
+                            <input id="previewTitle" type="text" class="w-full bg-[#181818] border border-googleBorder rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-googleAccent">
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="text-[11px] font-mono text-gray-400">Extracted Tasks (<span id="parsedTaskQty">0</span>)</label>
+                            <button onclick="addManualPreviewTask()" class="text-[11px] text-googleAccent hover:underline">+ Add Topic</button>
+                        </div>
+                        <div id="parsedTasksList" class="max-h-44 overflow-y-auto space-y-1.5 pr-1 bg-[#141414] p-2 rounded-xl border border-googleBorder"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-6 py-3.5 border-t border-googleBorder bg-[#0f0f0f] flex items-center justify-between">
+                <button onclick="closeSmartImportModal()" class="px-4 py-2 text-xs text-gray-400 hover:text-white transition-colors">Cancel</button>
+                <button onclick="applyImportAsNew()" class="px-5 py-2 text-xs font-semibold bg-googleAccent hover:bg-[#a6c8ff] text-black rounded-lg transition-colors flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    <span>Import as New Course</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generic Confirm Modal -->
+    <div id="confirmModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-[#121212] border border-googleBorder w-full max-w-sm rounded-2xl shadow-2xl p-5 text-center">
+            <div class="w-10 h-10 rounded-full bg-red-950/60 border border-red-800/40 text-googleDanger flex items-center justify-center mx-auto mb-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <h4 id="confirmTitle" class="text-sm font-semibold text-white mb-1">Confirm Action</h4>
+            <p id="confirmMessage" class="text-xs text-gray-400 mb-5 leading-relaxed">Are you sure you want to proceed?</p>
+            <div class="flex items-center justify-center gap-2">
+                <button onclick="closeConfirmModal()" class="px-4 py-2 text-xs text-gray-300 hover:text-white border border-googleBorder rounded-lg bg-[#181818]">Cancel</button>
+                <button id="confirmBtnAction" class="px-4 py-2 text-xs font-semibold text-white bg-googleDanger hover:bg-red-500 rounded-lg">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 bg-[#1a1a1a] border border-googleBorder text-gray-200 px-4 py-2.5 rounded-xl text-xs font-medium shadow-2xl flex items-center gap-2.5 transform translate-y-16 opacity-0 transition-all duration-300 pointer-events-none">
+        <span id="toastIcon" class="w-2 h-2 rounded-full bg-googleAccent"></span>
+        <span id="toastMsg">Notification</span>
+    </div>
+
+    <script>
+        let courses = [];
+        let activeCourseId = null;
+        let isTaskCollapsed = false;
+        let stagedTasks = [];
+        let pendingConfirmAction = null;
+
+        const STORAGE_KEY = 'academic_course_tracker_v1';
+        const ACTIVE_KEY = 'academic_course_tracker_active_id';
+
+        // --- Core Lifecycle ---
+
+        function init() {
+            // Rehydrate saved progress and courses
+            const savedData = localStorage.getItem(STORAGE_KEY);
+            if (savedData) {
+                try {
+                    const parsed = JSON.parse(savedData);
+                    if (Array.isArray(parsed)) {
+                        courses = parsed;
+                    }
+                } catch(e) {
+                    console.error("Failed to parse local storage courses", e);
+                    courses = [];
+                }
+            } else {
+                courses = [];
+            }
+
+            const savedActive = localStorage.getItem(ACTIVE_KEY);
+            if (savedActive && courses.some(c => c.id === savedActive)) {
+                activeCourseId = savedActive;
+            } else if (courses.length > 0) {
+                activeCourseId = courses[0].id;
+            } else {
+                activeCourseId = null;
+            }
+
+            // Setup Mobile Drawer
+            document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+                document.getElementById('sidebar').classList.toggle('-translate-x-full');
+            });
+
+            // Close action dropdown on outside click
+            window.addEventListener('click', (e) => {
+                const menu = document.getElementById('actionMenu');
+                if (!menu.contains(e.target) && !e.target.closest('button[onclick*="toggleActionMenu"]')) {
+                    menu.classList.add('hidden');
+                }
+            });
+
+            renderSidebar();
+            if (activeCourseId) {
+                selectCourse(activeCourseId, false);
+            } else {
+                renderMainContent();
+            }
+            updateDegreeProgress();
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(courses));
+                if (activeCourseId) {
+                    localStorage.setItem(ACTIVE_KEY, activeCourseId);
+                }
+            } catch(e) {
+                console.error("Local storage save error", e);
+            }
+            updateSidebarProgress();
+            updateDegreeProgress();
+        }
+
+        function calculateCourseProgress(course) {
+            if (!course || !course.topics || course.topics.length === 0) return 0;
+            const completed = course.topics.filter(t => t.completed).length;
+            return Math.round((completed / course.topics.length) * 100);
+        }
+
+        function updateDegreeProgress() {
+            let total = 0;
+            let done = 0;
+            courses.forEach(c => {
+                if (c.topics) {
+                    total += c.topics.length;
+                    done += c.topics.filter(t => t.completed).length;
+                }
+            });
+
+            const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+            const pctText = `${pct}%`;
+
+            document.getElementById('degreeProgressPercent').textContent = pctText;
+            document.getElementById('degreeProgressBar').style.width = pctText;
+            document.getElementById('degreeCheckpointsSummary').textContent = `${done}/${total} Checkpoints`;
+            document.getElementById('coursesCountSummary').textContent = `${courses.length} Courses`;
+        }
+
+        // --- Render Sidebar ---
+
+        function renderSidebar() {
+            const list = document.getElementById('courseList');
+            list.innerHTML = '';
+
+            if (courses.length === 0) {
+                list.innerHTML = `
+                    <div class="px-4 py-8 text-center text-xs font-mono text-gray-500">
+                        No courses added yet.<br>
+                        Click below or open the menu to import any curriculum.
+                    </div>
+                `;
+                return;
+            }
+
+            courses.forEach(course => {
+                const progress = calculateCourseProgress(course);
+                const isCompleted = progress === 100 && course.topics.length > 0;
+                const isActive = activeCourseId === course.id;
+
+                const item = document.createElement('div');
+                item.id = `nav-${course.id}`;
+                item.className = `w-full text-left px-3 py-2 rounded-xl transition-all flex items-center justify-between group cursor-pointer ${isActive ? 'bg-[#181818] border border-googleBorder' : 'hover:bg-[#121212] border border-transparent'}`;
+
+                item.onclick = (e) => {
+                    if (e.target.closest('.delete-course-btn')) return;
+                    selectCourse(course.id, true);
+                    if (window.innerWidth < 768) {
+                        document.getElementById('sidebar').classList.add('-translate-x-full');
+                    }
+                };
+
+                item.innerHTML = `
+                    <div class="flex-1 min-w-0 pr-2">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs font-semibold ${isActive ? 'text-white' : 'text-gray-300'} group-hover:text-white transition-colors">${escapeHtml(course.code)}</span>
+                            <span class="text-[10px] font-mono text-gray-500">${escapeHtml(course.units || '')}</span>
+                        </div>
+                        <div class="text-[11px] text-gray-400 truncate mt-0.5" title="${escapeHtml(course.title)}">${escapeHtml(course.title)}</div>
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <div class="flex flex-col items-end">
+                            <span class="text-[10px] font-mono leading-none mb-1 ${isCompleted ? 'text-googleSuccess font-bold' : 'text-gray-400'} nav-pct" data-id="${course.id}">${progress}%</span>
+                            <div class="w-8 h-1 bg-[#232323] rounded-full overflow-hidden">
+                                <div class="h-full ${isCompleted ? 'bg-googleSuccess' : 'bg-googleAccent'} transition-all duration-300 nav-bar" data-id="${course.id}" style="width: ${progress}%"></div>
+                            </div>
+                        </div>
+                        <button onclick="promptDeleteCourse('${course.id}')" class="delete-course-btn opacity-0 group-hover:opacity-100 p-1 text-gray-500 hover:text-googleDanger transition-opacity" title="Delete Course">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function updateSidebarProgress() {
+            courses.forEach(course => {
+                const progress = calculateCourseProgress(course);
+                const isCompleted = progress === 100 && course.topics.length > 0;
+
+                const pctSpan = document.querySelector(`.nav-pct[data-id="${course.id}"]`);
+                const barDiv = document.querySelector(`.nav-bar[data-id="${course.id}"]`);
+
+                if (pctSpan && barDiv) {
+                    pctSpan.textContent = `${progress}%`;
+                    barDiv.style.width = `${progress}%`;
+
+                    if (isCompleted) {
+                        pctSpan.classList.remove('text-gray-400');
+                        pctSpan.classList.add('text-googleSuccess', 'font-bold');
+                        barDiv.classList.remove('bg-googleAccent');
+                        barDiv.classList.add('bg-googleSuccess');
+                    } else {
+                        pctSpan.classList.add('text-gray-400');
+                        pctSpan.classList.remove('text-googleSuccess', 'font-bold');
+                        barDiv.classList.add('bg-googleAccent');
+                        barDiv.classList.remove('bg-googleSuccess');
+                    }
+                }
+            });
+        }
+
+        function selectCourse(id, animate = true) {
+            if (activeCourseId && activeCourseId !== id) {
+                const oldNav = document.getElementById(`nav-${activeCourseId}`);
+                if (oldNav) oldNav.className = `w-full text-left px-3 py-2 rounded-xl transition-all flex items-center justify-between group cursor-pointer hover:bg-[#121212] border border-transparent`;
+            }
+
+            activeCourseId = id;
+            localStorage.setItem(ACTIVE_KEY, id);
+
+            const newNav = document.getElementById(`nav-${id}`);
+            if (newNav) newNav.className = `w-full text-left px-3 py-2 rounded-xl transition-all flex items-center justify-between group cursor-pointer bg-[#181818] border border-googleBorder`;
+
+            renderMainContent(animate);
+        }
+
+        // --- Render Main Content ---
+
+        function renderMainContent(animate = false) {
+            const course = courses.find(c => c.id === activeCourseId);
+            const container = document.getElementById('mainContent');
+
+            if (!course) {
+                container.innerHTML = `
+                    <div class="p-12 text-center text-gray-500 text-xs font-mono border border-dashed border-googleBorder rounded-2xl">
+                        Clean slate. No course selected.<br><br>
+                        Click <button onclick="openCreateCourseModal()" class="text-googleAccent underline hover:text-white">Add New Course</button> or <button onclick="openSmartImportModal()" class="text-googleAccent underline hover:text-white">Import Syllabus Text</button> to get started.
+                    </div>
+                `;
+                return;
+            }
+
+            // Subtle transition class applied smoothly only on course switch
+            if (animate) {
+                container.classList.remove('course-fade');
+                void container.offsetWidth;
+                container.classList.add('course-fade');
+            }
+
+            const progress = calculateCourseProgress(course);
+            const isCompleted = progress === 100 && course.topics.length > 0;
+            const completedCount = course.topics.filter(t => t.completed).length;
+
+            let html = `
+                <div class="mb-8">
+                    <!-- Course Metas & Actions -->
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span contenteditable="true" 
+                                  spellcheck="false"
+                                  onblur="updateCourseField('${course.id}', 'code', this.innerText)" 
+                                  class="px-2.5 py-1 text-xs font-mono tracking-wider bg-[#161616] text-googleAccent border border-googleBorder rounded-md cursor-text" 
+                                  title="Click to edit course code">${escapeHtml(course.code)}</span>
+                            
+                            <span contenteditable="true" 
+                                  spellcheck="false"
+                                  onblur="updateCourseField('${course.id}', 'units', this.innerText)" 
+                                  class="px-2.5 py-1 text-xs font-mono text-gray-400 bg-[#161616] border border-googleBorder rounded-md cursor-text"
+                                  title="Click to edit credit units">${escapeHtml(course.units || '2 Units')}</span>
+                        </div>
+
+                        <!-- Course Quick Controls -->
+                        <div class="flex items-center gap-2">
+                            <button onclick="exportCurrentCourseText()" class="text-xs text-gray-400 hover:text-white px-2.5 py-1 rounded-lg bg-[#141414] border border-googleBorder transition-colors flex items-center gap-1.5" title="Export this course as TXT">
+                                <svg class="w-3.5 h-3.5 text-googleAccent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                <span>Export TXT</span>
+                            </button>
+                            <button onclick="promptDeleteCourse('${course.id}')" class="text-gray-500 hover:text-googleDanger p-1.5 rounded-lg bg-[#141414] border border-googleBorder transition-colors" title="Delete Course">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Course Title (Editable) -->
+                    <h2 contenteditable="true" 
+                        spellcheck="false"
+                        onblur="updateCourseField('${course.id}', 'title', this.innerText)"
+                        title="Click to edit course title" 
+                        class="text-2xl md:text-3xl font-bold text-white tracking-tight leading-snug mt-2 mb-6 cursor-text transition-colors hover:text-gray-200">${escapeHtml(course.title)}</h2>
+
+                    <!-- Completion Metric Panel -->
+                    <div class="bg-googleSurface border border-googleBorder p-4 md:p-5 rounded-2xl">
+                        <div class="flex items-center justify-between text-xs font-mono mb-2">
+                            <span id="activeCourseCountSummary" class="text-gray-400">Course Completion &bull; ${completedCount}/${course.topics.length} Checkpoints</span>
+                            <span id="activeCoursePct" class="${isCompleted ? 'text-googleSuccess font-bold' : 'text-googleAccent'}">${progress}%</span>
+                        </div>
+                        <div class="w-full h-2 bg-[#202020] rounded-full overflow-hidden">
+                            <div id="activeCourseBar" class="h-full ${isCompleted ? 'bg-googleSuccess shadow-[0_0_12px_rgba(129,201,149,0.4)]' : 'bg-googleAccent'} transition-all duration-300 ease-out" style="width: ${progress}%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Checkpoints Section Header -->
+                <div class="flex items-center justify-between mb-3 border-b border-googleBorder pb-2">
+                    <button onclick="toggleCollapseTasks()" class="flex items-center gap-2 text-xs font-mono text-gray-400 uppercase tracking-widest hover:text-white transition-colors">
+                        <svg class="w-3.5 h-3.5 transform transition-transform ${isTaskCollapsed ? '-rotate-90' : 'rotate-0'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        <span>Checkpoints (${course.topics.length})</span>
+                    </button>
+
+                    <div class="flex items-center gap-2">
+                        <button onclick="setAllCourseCheckpoints('${course.id}', true)" class="text-[11px] font-mono text-gray-400 hover:text-googleSuccess transition-colors">Mark All Done</button>
+                        <span class="text-gray-600">&bull;</span>
+                        <button onclick="setAllCourseCheckpoints('${course.id}', false)" class="text-[11px] font-mono text-gray-400 hover:text-gray-200 transition-colors">Reset Progress</button>
+                    </div>
+                </div>
+
+                <!-- Checkpoints Dynamic List -->
+                <div id="tasksListContainer" class="${isTaskCollapsed ? 'hidden' : 'space-y-1.5'}">
+            `;
+
+            if (course.topics.length === 0) {
+                html += `
+                    <div class="p-8 text-center border border-dashed border-googleBorder rounded-xl text-gray-500 text-xs">
+                        No checkpoints currently registered. Add one below.
+                    </div>
+                `;
+            } else {
+                course.topics.forEach((topic, index) => {
+                    html += `
+                        <div id="topic-row-${index}" class="topic-row flex items-start gap-3 p-3 rounded-xl border border-transparent hover:border-googleBorder hover:bg-[#0c0c0c] group ${topic.completed ? 'opacity-55' : ''}">
+                            <div class="pt-0.5">
+                                <input type="checkbox" class="custom-checkbox" 
+                                    ${topic.completed ? 'checked' : ''} 
+                                    onchange="toggleTopic('${course.id}', ${index})">
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div contenteditable="true" 
+                                     spellcheck="false"
+                                     onblur="updateTopicText('${course.id}', ${index}, this.innerText)"
+                                     class="text-[14px] leading-relaxed cursor-text ${topic.completed ? 'text-gray-500 line-through' : 'text-gray-200 group-hover:text-white transition-colors'}">
+                                    ${escapeHtml(topic.title)}
+                                </div>
+                            </div>
+                            <div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 flex-shrink-0">
+                                <button onclick="deleteTopic('${course.id}', ${index})" class="text-gray-500 hover:text-googleDanger p-1 transition-colors" title="Delete Checkpoint">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            // Quick Add Checkpoint Input
+            html += `
+                </div>
+                <div class="mt-4 pt-2">
+                    <div class="flex items-center gap-2">
+                        <input id="quickTopicInput" 
+                               type="text" 
+                               placeholder="Add a new syllabus checkpoint topic..." 
+                               onkeydown="if(event.key === 'Enter') addQuickTopic('${course.id}')"
+                               class="flex-1 bg-[#121212] border border-googleBorder rounded-xl px-4 py-2.5 text-xs text-gray-200 placeholder-gray-500 focus:outline-none focus:border-googleAccent font-sans">
+                        <button onclick="addQuickTopic('${course.id}')" class="px-4 py-2.5 bg-[#181818] hover:bg-[#222222] border border-googleBorder text-googleAccent text-xs font-mono rounded-xl transition-colors">
+                            Add Checkpoint
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // --- Checkpoint & Course CRUD ---
+
+        // In-place updates without blinking or full-page redraw
+        function toggleTopic(courseId, topicIndex) {
+            const course = courses.find(c => c.id === courseId);
+            if (course && course.topics[topicIndex] !== undefined) {
+                const topic = course.topics[topicIndex];
+                topic.completed = !topic.completed;
+                saveData();
+
+                // Target row UI update to prevent screen blink
+                const row = document.getElementById(`topic-row-${topicIndex}`);
+                if (row) {
+                    if (topic.completed) {
+                        row.classList.add('opacity-55');
+                        const textEl = row.querySelector('[contenteditable]');
+                        if (textEl) {
+                            textEl.classList.remove('text-gray-200');
+                            textEl.classList.add('text-gray-500', 'line-through');
+                        }
+                    } else {
+                        row.classList.remove('opacity-55');
+                        const textEl = row.querySelector('[contenteditable]');
+                        if (textEl) {
+                            textEl.classList.remove('text-gray-500', 'line-through');
+                            textEl.classList.add('text-gray-200');
+                        }
+                    }
+                }
+
+                // Update active metric cards smoothly
+                const progress = calculateCourseProgress(course);
+                const isCompleted = progress === 100 && course.topics.length > 0;
+                const completedCount = course.topics.filter(t => t.completed).length;
+
+                const countEl = document.getElementById('activeCourseCountSummary');
+                const pctEl = document.getElementById('activeCoursePct');
+                const barEl = document.getElementById('activeCourseBar');
+
+                if (countEl) countEl.innerHTML = `Course Completion &bull; ${completedCount}/${course.topics.length} Checkpoints`;
+                if (pctEl) {
+                    pctEl.textContent = `${progress}%`;
+                    pctEl.className = isCompleted ? 'text-googleSuccess font-bold' : 'text-googleAccent';
+                }
+                if (barEl) {
+                    barEl.style.width = `${progress}%`;
+                    barEl.className = `h-full ${isCompleted ? 'bg-googleSuccess shadow-[0_0_12px_rgba(129,201,149,0.4)]' : 'bg-googleAccent'} transition-all duration-300 ease-out`;
+                }
+            }
+        }
+
+        function setAllCourseCheckpoints(courseId, status) {
+            const course = courses.find(c => c.id === courseId);
+            if (course) {
+                course.topics.forEach(t => t.completed = status);
+                saveData();
+                renderMainContent(false);
+                showToast(status ? "All checkpoints completed" : "Checkpoints reset", "success");
+            }
+        }
+
+        function updateCourseField(courseId, field, value) {
+            const course = courses.find(c => c.id === courseId);
+            if (!course) return;
+            const cleaned = value.trim();
+            if (cleaned.length > 0) {
+                course[field] = cleaned;
+                saveData();
+                renderSidebar();
+            }
+        }
+
+        function updateTopicText(courseId, topicIndex, value) {
+            const course = courses.find(c => c.id === courseId);
+            if (course && course.topics[topicIndex]) {
+                const cleaned = value.trim();
+                if (cleaned.length > 0) {
+                    course.topics[topicIndex].title = cleaned;
+                    saveData();
+                } else {
+                    renderMainContent(false);
+                }
+            }
+        }
+
+        function addQuickTopic(courseId) {
+            const input = document.getElementById('quickTopicInput');
+            if (!input) return;
+            const text = input.value.trim();
+            if (!text) return;
+
+            const course = courses.find(c => c.id === courseId);
+            if (course) {
+                course.topics.push({ title: text, completed: false });
+                saveData();
+                renderMainContent(false);
+                showToast("Checkpoint topic added", "info");
+            }
+        }
+
+        function deleteTopic(courseId, topicIndex) {
+            const course = courses.find(c => c.id === courseId);
+            if (course) {
+                course.topics.splice(topicIndex, 1);
+                saveData();
+                renderMainContent(false);
+            }
+        }
+
+        function promptDeleteCourse(courseId) {
+            const course = courses.find(c => c.id === courseId);
+            if (!course) return;
+
+            openConfirmModal(
+                `Delete Course: ${course.code}`,
+                `Are you sure you want to delete ${course.code} (${course.title}) and all its checkpoints?`,
+                () => {
+                    courses = courses.filter(c => c.id !== courseId);
+                    if (activeCourseId === courseId) {
+                        activeCourseId = courses.length > 0 ? courses[0].id : null;
+                    }
+                    saveData();
+                    renderSidebar();
+                    renderMainContent(false);
+                    showToast(`Deleted ${course.code}`, "info");
+                }
+            );
+        }
+
+        function toggleCollapseTasks() {
+            isTaskCollapsed = !isTaskCollapsed;
+            renderMainContent(false);
+        }
+
+        // --- Manual Course Creation ---
+
+        function openCreateCourseModal() {
+            document.getElementById('newCourseCode').value = '';
+            document.getElementById('newCourseTitle').value = '';
+            document.getElementById('newCourseUnits').value = '3 Units';
+            document.getElementById('newCourseTopics').value = '';
+            document.getElementById('createCourseModal').classList.remove('hidden');
+        }
+
+        function closeCreateCourseModal() {
+            document.getElementById('createCourseModal').classList.add('hidden');
+        }
+
+        function submitCreateCourse() {
+            const code = document.getElementById('newCourseCode').value.trim();
+            const title = document.getElementById('newCourseTitle').value.trim();
+            const units = document.getElementById('newCourseUnits').value.trim() || '3 Units';
+            const rawTopics = document.getElementById('newCourseTopics').value.trim();
+
+            if (!code || !title) {
+                showToast("Course Code and Title are required", "danger");
+                return;
+            }
+
+            const topics = rawTopics
+                ? rawTopics.split('\n').map(t => t.trim()).filter(Boolean).map(t => ({ title: t, completed: false }))
+                : [{ title: "Course Introduction & Setup", completed: false }];
+
+            const id = code.replace(/[^A-Za-z0-9]/g, '').toUpperCase() + '_' + Date.now().toString().slice(-4);
+
+            courses.push({ id, code, title, units, topics });
+            saveData();
+            renderSidebar();
+            selectCourse(id, true);
+            closeCreateCourseModal();
+            showToast(`Created course ${code}`, "success");
+        }
+
+        // --- Smart Syllabus Parser ---
+
+        function openSmartImportModal() {
+            document.getElementById('importModal').classList.remove('hidden');
+            document.getElementById('rawTextInput').focus();
+        }
+
+        function closeSmartImportModal() {
+            document.getElementById('importModal').classList.add('hidden');
+            document.getElementById('rawTextInput').value = '';
+            document.getElementById('parsePreviewArea').classList.add('hidden');
+            stagedTasks = [];
+        }
+
+        function parseRawInput() {
+            const raw = document.getElementById('rawTextInput').value.trim();
+            if (!raw) {
+                showToast("Please paste text to analyze", "danger");
+                return;
+            }
+
+            // Detect any level course code (e.g. CSC 101, CYB 202, SEN 301, EEE 405, MTH 501)
+            const codeMatch = raw.match(/\b([A-Z]{2,4}\s?[0-9]{3})\b/i);
+            let detectedCode = codeMatch ? codeMatch[1].toUpperCase() : "COURSE 101";
+
+            // Detect credit units if present
+            const unitMatch = raw.match(/\b([1-6]\s*(?:Units?|Credit(?:s)?))\b/i);
+            let detectedUnits = unitMatch ? unitMatch[1] : "3 Units";
+
+            let detectedTitle = "Course Syllabus";
+            const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+
+            if (lines.length > 0) {
+                const firstLine = lines[0];
+                if (firstLine.includes(':')) {
+                    const parts = firstLine.split(':');
+                    detectedTitle = parts.slice(1).join(':').replace(/\(.*?\)/g, '').trim();
+                } else if (!firstLine.toLowerCase().includes("course contents") && firstLine.length < 70) {
+                    detectedTitle = firstLine.replace(/^[0-9A-Z\s\-:]+/i, '').replace(/\(.*?\)/g, '').trim() || firstLine;
+                }
+            }
+
+            let bodyText = raw
+                .replace(/^.*(?:course contents|syllabus).*$/gim, '')
+                .replace(new RegExp(detectedCode, 'gi'), '')
+                .replace(new RegExp(detectedTitle, 'gi'), '')
+                .replace(/\b\d+\s*units?\b/gi, '');
+
+            let candidates = [];
+
+            if (/^\s*[\d\-\*\•]\s+/m.test(bodyText)) {
+                candidates = bodyText.split(/\n+/).map(s => s.replace(/^[\s\d\.\-\*\•\)]+/, '').trim());
+            } else {
+                const sentenceChunks = bodyText.split(/(?<=[.!?])\s+(?=[A-Z0-9])/g);
+                sentenceChunks.forEach(chunk => {
+                    const subParts = chunk.split(/[;\.]/).map(p => p.trim());
+                    subParts.forEach(p => {
+                        if (p.length > 3) candidates.push(p);
+                    });
+                });
+            }
+
+            stagedTasks = candidates
+                .map(t => t.replace(/^[\s\-\:\.\,]+/, '').replace(/[\s\.\,]+$/, '').trim())
+                .filter(t => t.length > 3 && !/^(overview|introduction|course contents|lecture)$/i.test(t));
+
+            stagedTasks = Array.from(new Set(stagedTasks));
+
+            if (stagedTasks.length === 0) {
+                stagedTasks = ["Fundamentals & Setup", "Core Laboratory Applications", "Review & Assessment"];
+            }
+
+            document.getElementById('previewCode').value = detectedCode;
+            document.getElementById('previewTitle').value = detectedTitle;
+            document.getElementById('previewUnits').value = detectedUnits;
+            document.getElementById('detectedCount').textContent = `Parsed ${stagedTasks.length} topics`;
+
+            renderStagedTasks();
+            document.getElementById('parsePreviewArea').classList.remove('hidden');
+        }
+
+        function renderStagedTasks() {
+            const container = document.getElementById('parsedTasksList');
+            document.getElementById('parsedTaskQty').textContent = stagedTasks.length;
+            container.innerHTML = '';
+
+            stagedTasks.forEach((task, idx) => {
+                const item = document.createElement('div');
+                item.className = "flex items-center gap-2 bg-[#1b1b1b] px-2.5 py-1.5 rounded-lg border border-googleBorder text-xs";
+                item.innerHTML = `
+                    <span class="text-gray-500 font-mono text-[10px] w-4">${idx + 1}.</span>
+                    <input type="text" value="${escapeHtml(task)}" onchange="stagedTasks[${idx}] = this.value" class="flex-1 bg-transparent text-gray-200 focus:outline-none text-xs">
+                    <button onclick="removeStagedTask(${idx})" class="text-gray-500 hover:text-googleDanger">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function removeStagedTask(index) {
+            stagedTasks.splice(index, 1);
+            renderStagedTasks();
+        }
+
+        function addManualPreviewTask() {
+            stagedTasks.push("New Checkpoint Topic");
+            renderStagedTasks();
+        }
+
+        function applyImportAsNew() {
+            const code = document.getElementById('previewCode').value.trim() || "COURSE 101";
+            const title = document.getElementById('previewTitle').value.trim() || "Course Syllabus";
+            const units = document.getElementById('previewUnits').value.trim() || "3 Units";
+
+            if (stagedTasks.length === 0) {
+                parseRawInput();
+            }
+
+            const cleanTopics = stagedTasks.map(t => ({ title: t, completed: false }));
+            const courseId = code.replace(/[^A-Za-z0-9]/g, '').toUpperCase() + '_' + Date.now().toString().slice(-4);
+
+            courses.push({
+                id: courseId,
+                code: code,
+                title: title,
+                units: units,
+                topics: cleanTopics
+            });
+
+            saveData();
+            renderSidebar();
+            selectCourse(courseId, true);
+            closeSmartImportModal();
+            showToast(`Added new course ${code}`, "success");
+        }
+
+        // --- Export & Backup Routines ---
+
+        function exportCurrentCourseText() {
+            const course = courses.find(c => c.id === activeCourseId);
+            if (!course) return;
+
+            let content = `ACADEMIC COURSE SYLLABUS CHECKLIST\n`;
+            content += `${course.code}: ${course.title} (${course.units})\n`;
+            content += `${'='.repeat(course.code.length + course.title.length + 15)}\n\n`;
+            content += `Status: ${calculateCourseProgress(course)}% completed\n\n`;
+            content += `CHECKPOINTS:\n`;
+
+            course.topics.forEach((t, i) => {
+                const mark = t.completed ? '[x]' : '[ ]';
+                content += `${mark} ${i + 1}. ${t.title}\n`;
+            });
+
+            downloadFile(`${course.code.replace(/\s+/g, '_')}_Checklist.txt`, content);
+            showToast(`Exported ${course.code} as TXT`, "info");
+        }
+
+        function exportAllText() {
+            if (courses.length === 0) {
+                showToast("No courses available to export", "danger");
+                return;
+            }
+
+            let content = `ACADEMIC CURRICULUM COMMAND CENTER - MASTER EXPORT\n`;
+            content += `Generated: ${new Date().toLocaleString()}\n`;
+            content += `========================================================\n\n`;
+
+            courses.forEach(c => {
+                const prog = calculateCourseProgress(c);
+                content += `[${c.code}] ${c.title} (${c.units}) - Progress: ${prog}%\n`;
+                content += `-`.repeat(56) + `\n`;
+                c.topics.forEach((t, i) => {
+                    const status = t.completed ? '[DONE]' : '[TODO]';
+                    content += `  ${status} ${t.title}\n`;
+                });
+                content += `\n`;
+            });
+
+            downloadFile(`Curriculum_Complete_Export.txt`, content);
+            showToast("Curriculum exported as TXT", "info");
+        }
+
+        function exportJSONBackup() {
+            if (courses.length === 0) {
+                showToast("No course data to export", "danger");
+                return;
+            }
+            const jsonStr = JSON.stringify(courses, null, 2);
+            downloadFile(`Curriculum_Backup_${Date.now()}.json`, jsonStr);
+            showToast("JSON backup downloaded", "info");
+        }
+
+        function importJSONBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (Array.isArray(data) && data.length > 0 && data[0].topics) {
+                        courses = data;
+                        activeCourseId = courses[0].id;
+                        saveData();
+                        renderSidebar();
+                        selectCourse(activeCourseId, true);
+                        showToast("Curriculum JSON restored successfully", "success");
+                    } else {
+                        showToast("Invalid JSON file format", "danger");
+                    }
+                } catch(err) {
+                    showToast("Failed to parse JSON file", "danger");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function confirmClearAll() {
+            openConfirmModal(
+                "Clear Tracker to Clean Slate?",
+                "This will clear all courses, topics, and checkboxes from your tracker. Make sure to export a JSON backup first if needed.",
+                () => {
+                    courses = [];
+                    activeCourseId = null;
+                    localStorage.removeItem(STORAGE_KEY);
+                    localStorage.removeItem(ACTIVE_KEY);
+                    renderSidebar();
+                    renderMainContent(false);
+                    updateDegreeProgress();
+                    showToast("Tracker wiped to clean slate", "info");
+                }
+            );
+        }
+
+        // --- Modals & Helpers ---
+
+        function openConfirmModal(title, message, onConfirm) {
+            document.getElementById('confirmTitle').textContent = title;
+            document.getElementById('confirmMessage').textContent = message;
+            pendingConfirmAction = onConfirm;
+            document.getElementById('confirmModal').classList.remove('hidden');
+
+            const btn = document.getElementById('confirmBtnAction');
+            btn.onclick = () => {
+                if (pendingConfirmAction) pendingConfirmAction();
+                closeConfirmModal();
+            };
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').classList.add('hidden');
+            pendingConfirmAction = null;
+        }
+
+        function toggleActionMenu(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('actionMenu');
+            if (!menu.classList.contains('hidden')) {
+                menu.classList.add('hidden');
+                return;
+            }
+
+            const rect = e.currentTarget.getBoundingClientRect();
+            const isMobile = window.innerWidth < 768;
+
+            if (isMobile) {
+                menu.style.top = `${rect.bottom + 8}px`;
+                menu.style.right = '12px';
+                menu.style.left = 'auto';
+            } else {
+                menu.style.top = `${rect.bottom + 8}px`;
+                menu.style.left = `${Math.min(rect.left, window.innerWidth - 240)}px`;
+                menu.style.right = 'auto';
+            }
+
+            menu.classList.remove('hidden');
+        }
+
+        function hideActionMenu() {
+            document.getElementById('actionMenu').classList.add('hidden');
+        }
+
+        function downloadFile(filename, text) {
+            const element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+            element.setAttribute('download', filename);
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        }
+
+        function showToast(message, type = "info") {
+            const toast = document.getElementById('toast');
+            const msg = document.getElementById('toastMsg');
+            const icon = document.getElementById('toastIcon');
+
+            msg.textContent = message;
+            if (type === "success") {
+                icon.className = "w-2 h-2 rounded-full bg-googleSuccess";
+            } else if (type === "danger") {
+                icon.className = "w-2 h-2 rounded-full bg-googleDanger";
+            } else {
+                icon.className = "w-2 h-2 rounded-full bg-googleAccent";
+            }
+
+            toast.classList.remove('translate-y-16', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-16', 'opacity-0');
+            }, 2600);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
